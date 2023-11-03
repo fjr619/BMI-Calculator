@@ -6,6 +6,10 @@ import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.text.DecimalFormat
+import kotlin.math.roundToInt
 
 
 sealed class Mode(
@@ -61,6 +65,9 @@ sealed class Mode(
 class BmiViewModel : ViewModel() {
     var bmi by mutableDoubleStateOf(0.0)
         private set
+
+    var bmiPercent by mutableDoubleStateOf(0.0)
+        private set
     var message by mutableStateOf("")
         private set
     var selectedMode: Mode by mutableStateOf(Mode.Metric)
@@ -113,16 +120,18 @@ class BmiViewModel : ViewModel() {
         else (703 * weight) / (height * height)
 
         message = when {
-            bmi < 15.0 -> "Very severely underweight"
-            bmi in 15.0..<16.0 -> "Severely underweight"
-            bmi in 16.0..<18.5 -> "Underweight"
-            bmi in 18.5..25.0 -> "Normal"
-            bmi in 25.0..30.0 -> "Overweight"
-            bmi in 30.0..35.0 -> "Moderately obese"
-            bmi in 35.0..40.0 -> "Severely obese"
-            bmi >= 40.0 -> "Very severely obese"
+            bmi < 18.5 -> "Underweight"
+            bmi in 18.5..< 25.0 -> "Normal"
+            bmi in 25.0.. 30.0 -> "Overweight"
+            bmi > 30.0-> "Obese"
             else -> error("Invalid params")
         }
+
+        val min = 15.0
+        val max = 30.0
+//        if (bmi > max) bmi = max
+        bmiPercent = BigDecimal((bmi  - min) / (max - min)).setScale(2, RoundingMode.HALF_EVEN).toDouble() * 100
+        Log.e("TAG", "bmiPercent $bmiPercent")
     }
 
     fun updateMode(it: Mode) {
@@ -157,9 +166,30 @@ class BmiViewModel : ViewModel() {
     }
 
     fun clear() {
-        heightState = heightState.copy(value = "", error = null)
-        weightState = weightState.copy(value = "", error = null)
+
+//        when (selectedMode) {
+//            Mode.Imperial -> {
+//                heightState = heightState.copy(
+//                    value = Mode.Imperial.rangeHeight.first()
+//                )
+//                weightState = weightState.copy(
+//                    value = Mode.Imperial.rangeWeight.last()
+//                )
+//            }
+//            Mode.Metric -> {
+//                heightState = heightState.copy(
+//                    value = Mode.Metric.rangeHeight.last()
+//                )
+//                weightState = weightState.copy(
+//                    value = Mode.Metric.rangeWeight.first()
+//                )
+//            }
+//        }
+
+//        heightState = heightState.copy(value = "", error = null)
+//        weightState = weightState.copy(value = "", error = null)
         bmi = 0.0
+        bmiPercent = 0.0
         message = ""
     }
 
